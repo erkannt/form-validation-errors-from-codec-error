@@ -6,25 +6,33 @@ import { formatValidationErrors, groupByKey } from "../src";
 import * as R from "fp-ts/Record";
 import * as O from "fp-ts/Option";
 
-const mapValidationErrors = flow(
-  groupByKey,
-  R.keys,
-  RA.map((key) =>
+const mapValidationErrors =
+  <T>(errorMap: Record<string, T>) =>
+  (validationErrors: t.Errors) =>
     pipe(
-      {
-        foo: "Please provide a foo-string",
-        bar: "Please provide a bar-number",
-      },
-      R.lookup(key),
-      O.getOrElse(() => "Whoops. Something is wrong, but I don't know what")
-    )
-  )
-);
+      validationErrors,
+      groupByKey,
+      R.keys,
+      RA.map((key) =>
+        pipe(
+          errorMap,
+          R.lookup(key),
+          O.getOrElseW(
+            () => "Whoops. Something is wrong, but I don't know what"
+          )
+        )
+      )
+    );
 
 const FormC = t.type({
   foo: t.string,
   bar: t.number,
 });
+
+const errorMap = {
+  foo: "Please provide a foo-string",
+  bar: "Please provide a bar-number",
+};
 
 describe("report bad parts of struct in human friendly way", () => {
   describe("given a valid body", () => {
@@ -45,7 +53,11 @@ describe("report bad parts of struct in human friendly way", () => {
       bar: 42,
     };
 
-    const form = pipe(body, FormC.decode, E.mapLeft(mapValidationErrors));
+    const form = pipe(
+      body,
+      FormC.decode,
+      E.mapLeft(mapValidationErrors(errorMap))
+    );
 
     it("return a human friendly prompt as part of left", () => {
       expect(form).toStrictEqual(E.left(["Please provide a foo-string"]));
@@ -55,7 +67,11 @@ describe("report bad parts of struct in human friendly way", () => {
   describe("given a body missing all fields", () => {
     const body = {};
 
-    const form = pipe(body, FormC.decode, E.mapLeft(mapValidationErrors));
+    const form = pipe(
+      body,
+      FormC.decode,
+      E.mapLeft(mapValidationErrors(errorMap))
+    );
 
     it("return a human friendly prompt as part of left", () => {
       expect(form).toStrictEqual(
