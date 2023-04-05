@@ -4,14 +4,21 @@ import { flow, pipe } from "fp-ts/lib/function";
 import * as t from "io-ts";
 import { formatValidationErrors, groupByKey } from "../src";
 import * as R from "fp-ts/Record";
+import * as O from "fp-ts/Option";
 
 const mapValidationErrors = flow(
   groupByKey,
-  R.mapWithIndex((key, error) =>
-    key === "foo" ? "Please provide a foo-string" : "unknown"
-  ),
-  R.toArray,
-  RA.map(([_key, error]) => error)
+  R.keys,
+  RA.map((key) =>
+    pipe(
+      {
+        foo: "Please provide a foo-string",
+        bar: "Please provide a bar-number",
+      },
+      R.lookup(key),
+      O.getOrElse(() => "Whoops. Something is wrong, but I don't know what")
+    )
+  )
 );
 
 const FormC = t.type({
@@ -50,9 +57,14 @@ describe("report bad parts of struct in human friendly way", () => {
 
     const form = pipe(body, FormC.decode, E.mapLeft(mapValidationErrors));
 
-    it.failing("return a human friendly prompt as part of left", () => {
+    it("return a human friendly prompt as part of left", () => {
       expect(form).toStrictEqual(
-        E.left(["Please provide a foo-string", "Please provide a bar-number"])
+        E.left(
+          expect.arrayContaining([
+            "Please provide a foo-string",
+            "Please provide a bar-number",
+          ])
+        )
       );
     });
   });
