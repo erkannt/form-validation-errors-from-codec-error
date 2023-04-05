@@ -15,8 +15,21 @@ describe("report bad parts of struct in human friendly way", () => {
     };
 
     const form = pipe(body, FormC.decode);
+
     it("returns form on right", () => {
       expect(form).toStrictEqual(E.right(body));
+    });
+  });
+
+  describe("given a body missing a field", () => {
+    const body = {
+      bar: 42,
+    };
+
+    const form = pipe(body, FormC.decode);
+
+    it.failing("return a human friendly prompt as part of left", () => {
+      expect(form).toStrictEqual(E.left("Please provide a string for `foo`"));
     });
   });
 });
