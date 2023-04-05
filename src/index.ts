@@ -146,7 +146,7 @@ const formatValidationCommonError = (
     )
   );
 
-const groupByKey = NEA.groupBy((error: t.ValidationError) =>
+export const groupByKey = NEA.groupBy((error: t.ValidationError) =>
   pipe(error.context, takeUntil(isUnionType), keyPath)
 );
 

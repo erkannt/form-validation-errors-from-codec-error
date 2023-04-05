@@ -1,7 +1,9 @@
 import * as E from "fp-ts/Either";
-import { pipe } from "fp-ts/lib/function";
+import * as RA from "fp-ts/ReadonlyArray";
+import { flow, pipe } from "fp-ts/lib/function";
 import * as t from "io-ts";
-import { formatValidationErrors } from "../src";
+import { formatValidationErrors, groupByKey } from "../src";
+import * as R from "fp-ts/Record";
 
 const FormC = t.type({
   foo: t.string,
@@ -27,10 +29,23 @@ describe("report bad parts of struct in human friendly way", () => {
       bar: 42,
     };
 
-    const form = pipe(body, FormC.decode, E.mapLeft(formatValidationErrors));
+    const form = pipe(
+      body,
+      FormC.decode,
+      E.mapLeft(
+        flow(
+          groupByKey,
+          R.mapWithIndex((key, error) =>
+            key === "foo" ? "Please provide a foo-string" : "unknown"
+          ),
+          R.toArray,
+          RA.map(([_key, error]) => error)
+        )
+      )
+    );
 
-    it.failing("return a human friendly prompt as part of left", () => {
-      expect(form).toStrictEqual(E.left("Please provide a string for `foo`"));
+    it("return a human friendly prompt as part of left", () => {
+      expect(form).toStrictEqual(E.left(["Please provide a foo-string"]));
     });
   });
 });
