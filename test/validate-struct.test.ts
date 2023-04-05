@@ -1,10 +1,7 @@
 import * as E from "fp-ts/Either";
 import { pipe } from "fp-ts/lib/function";
-import { ValidationError } from "io-ts";
-import { formatValidationErrors } from "io-ts-reporters";
-import * as C from "io-ts/Codec";
-import { DecodeError } from "io-ts/lib/Decoder";
 import * as t from "io-ts";
+import { formatValidationErrors } from "../src";
 
 const FormC = t.type({
   foo: t.string,
