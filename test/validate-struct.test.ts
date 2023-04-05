@@ -44,4 +44,16 @@ describe("report bad parts of struct in human friendly way", () => {
       expect(form).toStrictEqual(E.left(["Please provide a foo-string"]));
     });
   });
+
+  describe("given a body missing all fields", () => {
+    const body = {};
+
+    const form = pipe(body, FormC.decode, E.mapLeft(mapValidationErrors));
+
+    it.failing("return a human friendly prompt as part of left", () => {
+      expect(form).toStrictEqual(
+        E.left(["Please provide a foo-string", "Please provide a bar-number"])
+      );
+    });
+  });
 });
