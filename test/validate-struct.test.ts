@@ -5,6 +5,15 @@ import * as t from "io-ts";
 import { formatValidationErrors, groupByKey } from "../src";
 import * as R from "fp-ts/Record";
 
+const mapValidationErrors = flow(
+  groupByKey,
+  R.mapWithIndex((key, error) =>
+    key === "foo" ? "Please provide a foo-string" : "unknown"
+  ),
+  R.toArray,
+  RA.map(([_key, error]) => error)
+);
+
 const FormC = t.type({
   foo: t.string,
   bar: t.number,
@@ -29,20 +38,7 @@ describe("report bad parts of struct in human friendly way", () => {
       bar: 42,
     };
 
-    const form = pipe(
-      body,
-      FormC.decode,
-      E.mapLeft(
-        flow(
-          groupByKey,
-          R.mapWithIndex((key, error) =>
-            key === "foo" ? "Please provide a foo-string" : "unknown"
-          ),
-          R.toArray,
-          RA.map(([_key, error]) => error)
-        )
-      )
-    );
+    const form = pipe(body, FormC.decode, E.mapLeft(mapValidationErrors));
 
     it("return a human friendly prompt as part of left", () => {
       expect(form).toStrictEqual(E.left(["Please provide a foo-string"]));
