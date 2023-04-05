@@ -41,4 +41,21 @@ describe("report bad parts of union in human friendly way", () => {
       expect(form).toStrictEqual(E.left(["no-selection-made"]));
     });
   });
+
+  describe("given a conflict of interest but missing details", () => {
+    const body = {
+      hasConflictOfInterest: "yes",
+      conflictOfInterestDetails: "",
+    };
+
+    const form = pipe(
+      body,
+      ConflictOfInterestC.decode,
+      E.mapLeft(groupByKey)
+    );
+
+    it.failing("returns on left, indicating that details are mandatory", () => {
+      expect(form).toStrictEqual(E.left(["details-are-required"]));
+    });
+  });
 });
