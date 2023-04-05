@@ -1,28 +1,7 @@
 import * as E from "fp-ts/Either";
-import * as RA from "fp-ts/ReadonlyArray";
-import { flow, pipe } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/function";
 import * as t from "io-ts";
-import { formatValidationErrors, groupByKey } from "../src";
-import * as R from "fp-ts/Record";
-import * as O from "fp-ts/Option";
-
-const mapValidationErrors =
-  <T>(errorMap: Record<string, T>) =>
-  (validationErrors: t.Errors) =>
-    pipe(
-      validationErrors,
-      groupByKey,
-      R.keys,
-      RA.map((key) =>
-        pipe(
-          errorMap,
-          R.lookup(key),
-          O.getOrElseW(
-            () => "Whoops. Something is wrong, but I don't know what"
-          )
-        )
-      )
-    );
+import { mapValidationErrors } from "../src/map-validation-errors";
 
 const FormC = t.type({
   foo: t.string,
