@@ -3,6 +3,7 @@ import { pipe } from "fp-ts/lib/function";
 import * as t from "io-ts";
 import * as tt from "io-ts-types";
 import { groupByKey } from "../src";
+import { mapValidationErrors } from "../src/map-validation-errors";
 
 const ConflictOfInterestC = t.union([
   t.type({ hasConflictOfInterest: t.literal("no") }),
@@ -30,9 +31,14 @@ describe("report bad parts of union in human friendly way", () => {
       hasConflictOfInterest: undefined,
     };
 
-    const form = pipe(body, ConflictOfInterestC.decode, E.mapLeft(groupByKey));
-    it.failing("returns something useful on the left", () => {
-      expect(form).toStrictEqual(E.left("whoops"));
+    const form = pipe(
+      body,
+      ConflictOfInterestC.decode,
+      E.mapLeft(mapValidationErrors({ "": "no-selection-made" }))
+    );
+
+    it("returns on left, indicating that a choice need to be made", () => {
+      expect(form).toStrictEqual(E.left(["no-selection-made"]));
     });
   });
 });
